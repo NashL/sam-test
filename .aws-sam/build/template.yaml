@@ -12,14 +12,15 @@ Globals:
     MemorySize: 128
 Resources:
   Table:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
   GetTest:
     Type: AWS::Serverless::Function
     Properties:
@@ -39,7 +40,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: PutTest
-      Policies: AmazonDynamoDBFullAccess
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: Table
       Handler: put.lambdaHandler
       Events:
         GetTest:
@@ -51,7 +55,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: DeleteTest
-      Policies: AmazonDynamoDBFullAccess
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: Table
       Handler: delete.lambdaHandler
       Events:
         DeleteTest:

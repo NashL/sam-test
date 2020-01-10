@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for sam-test
+  
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Table
+    Timeout: 300
+    MemorySize: 128
+
+Resources:
+  Table:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  GetTest:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: test/
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref Table
+      Handler: get.lambdaHandler
+      Events:
+        GetTest:
+          Type: Api
+          Properties:
+            Path: /test
+            Method: get
+  
+  PutTest:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: test/
+      Policies: AmazonDynamoDBFullAccess
+      Handler: put.lambdaHandler
+      Events:
+        GetTest:
+          Type: Api
+          Properties:
+            Path: /test
+            Method: put
+  
+  DeleteTest:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: test/
+      Policies: AmazonDynamoDBFullAccess
+      Handler: delete.lambdaHandler
+      Events:
+        DeleteTest:
+          Type: Api
+          Properties:
+            Path: /test
+            Method: delete

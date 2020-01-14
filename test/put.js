@@ -1,13 +1,7 @@
-const AWS = require('aws-sdk');
-
-const tableName = process.env.TABLE_NAME
+const tableName = process.env.TABLE_NAME || 'Table'
+const dynamoDbClient = require('./tests/utils/dynamoDbClient');
 let response;
-let options = {};
 
-if (process.env.AWS_SAM_LOCAL)
-	options.endpoint = "http://host.docker.internal:8000";
-
-const documentClient = new AWS.DynamoDB.DocumentClient(options);
 
 exports.lambdaHandler = async (event, context) => {
 
@@ -18,7 +12,7 @@ exports.lambdaHandler = async (event, context) => {
 	}
 
 	try {
-		let data = await documentClient.put({ TableName: tableName, Item: item }).promise();
+		let data = await dynamoDbClient.connect().put({ TableName: tableName, Item: item }).promise();
 		response = {
 			statusCode: 200,
 			body: JSON.stringify({ counter: newCounterValue })
@@ -29,8 +23,8 @@ exports.lambdaHandler = async (event, context) => {
 		return err;
 	}
 }
-	
-	const getCurrentCounter = async () => {
+
+const getCurrentCounter = async () => {
 	const params = {
 		TableName: tableName,
 		Key: {
@@ -39,7 +33,7 @@ exports.lambdaHandler = async (event, context) => {
 	}
 
 	try {
-		const data = await documentClient.get(params).promise();
+		const data = await dynamoDbClient.connect().get(params).promise();
 		return data.Item.counter;
 	} catch (err) {
 		console.log("err", err);

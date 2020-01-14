@@ -33,6 +33,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref Table
       Handler: get.lambdaHandler
+      Runtime: nodejs12.x
       Events:
         GetTest:
           Type: Api

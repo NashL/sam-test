@@ -8,16 +8,16 @@ const expect = chai.expect;
 var event, context;
 
 describe('When we get the counter', function () {
-    it('verifies successful response', async () => {
-        const result = await getFunc.lambdaHandler(event, context);
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(200);
-        expect(result.body).to.be.an('string');
+  it('verifies successful response', async () => {
+      const result = await getFunc.lambdaHandler(event, context);
+      expect(result).to.be.an('object');
+      expect(result.statusCode).to.equal(200);
+      expect(result.body).to.be.an('string');
 
-        let parsedResponse = JSON.parse(result.body);
-        expect(parsedResponse).to.be.an('object');
-        expect(parsedResponse.counter).to.be.a('number');
-    });
+      let parsedResponse = JSON.parse(result.body);
+      expect(parsedResponse).to.be.an('object');
+      expect(parsedResponse.counter).to.be.a('number');
+  });
 });
 
 

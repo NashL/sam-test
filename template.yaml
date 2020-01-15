@@ -24,7 +24,6 @@ Resources:
           AttributeName: "id"
           KeyType: "HASH"
       BillingMode: PAY_PER_REQUEST
-
   GetTest:
     Type: AWS::Serverless::Function 
     Properties:
@@ -40,7 +39,6 @@ Resources:
           Properties:
             Path: /test
             Method: get
-  
   PutTest:
     Type: AWS::Serverless::Function
     Properties:
@@ -55,7 +53,6 @@ Resources:
           Properties:
             Path: /test
             Method: put
-  
   DeleteTest:
     Type: AWS::Serverless::Function
     Properties:
@@ -70,3 +67,40 @@ Resources:
           Properties:
             Path: /test
             Method: delete
+
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Protocol: email
+        Endpoint: 'onluza@gmail.com'
+  GetTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref GetTest
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: '1'
+  DeleteTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DeleteTest
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: '1'

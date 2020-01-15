@@ -1,5 +1,5 @@
 const tableName = process.env.TABLE_NAME || 'Table'
-const dynamoDbClient = require('./tests/utils/dynamoDbClient');
+const dynamoDbClient = require('./utils/dynamoDbClient');
 let response;
 
 exports.lambdaHandler = async (event, context) => {

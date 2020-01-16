@@ -1,22 +1,31 @@
-// 'use strict';
+const AWS = require("aws-sdk-mock");
+const {get, put} = require('../../utils/dynamoDbClient');
 
-// const app = require('../../app.js');
-// const chai = require('chai');
-// const expect = chai.expect;
-// var event, context;
+const chai = require('chai');
+const expect = chai.expect;
 
-// describe('Tests index', function () {
-//     it('verifies successful response', async () => {
-//         const result = await app.lambdaHandler(event, context)
+describe('Database actions tests', () => {
+    afterEach(() => {
+        AWS.restore('DynamoDB.DocumentClient');
+    })
+    it('Verifies Database getItems', async () => {        
+        AWS.mock('DynamoDB.DocumentClient', 'get', function(params, callback) {
+            callback(null, { Item: { id: 1, counter: 0}});
+        });
+        let result = await get({tableName: 'Table'});
+        expect(result).to.be.an('object');
+        expect(result.counter).to.be.eql(0);
+        expect(result.id).to.be.eql(1);
+    });
 
-//         expect(result).to.be.an('object');
-//         expect(result.statusCode).to.equal(200);
-//         expect(result.body).to.be.an('string');
-
-//         let response = JSON.parse(result.body);
-
-//         expect(response).to.be.an('object');
-//         expect(response.message).to.be.equal("hello world");
-//         // expect(response.location).to.be.an("string");
-//     });
-// });
+    it('Verifies Database putItems', async () => {        
+        AWS.mock('DynamoDB.DocumentClient', 'put', function(params, callback) {
+            callback(null, { Item: { id: 2, counter: 0}});
+        });
+        let result = await put({tableName: 'Table'});
+        expect(result).to.be.an('object');
+        expect(result.id).to.be.eql(2);
+        expect(result.counter).to.be.eql(0);
+    });
+    
+})

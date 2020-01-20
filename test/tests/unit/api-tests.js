@@ -1,10 +1,10 @@
 'use strict';
 const { getHandler, putHandler, deleteHandler } = require('../../handler');
 const AWS = require("aws-sdk-mock");
+const eventFactory = require('../../utils/mockEventFactory');
 
 const chai = require('chai');
 const expect = chai.expect;
-var event;
 
 const dynamoDbClient = require('../../utils/dynamoDbClient');
 
@@ -18,8 +18,7 @@ describe('When we GET the counter', () => {
       callback(null, { Item: { id: 1, counter: 0 } });
     });
 
-    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(event);
-
+    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(eventFactory.emptyEvent());
     expect(headers['Content-Type']).to.equal('application/json');
     expect(statusCode).to.equal(200);
     expect(body).to.be.an('string');
@@ -34,14 +33,14 @@ describe('When we GET the counter', () => {
       callback(new Error('fail'));
     });
 
-    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(event);
+    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(eventFactory.emptyEvent());
     expect(headers['Content-Type']).to.equal('application/json');
     expect(statusCode).to.equal(400);
     expect(JSON.parse(body).message).to.equal('fail');
   });
 });
 
-describe('When we increment the counter', function () {
+describe('When we increment the counter with PUT method', function () {
   afterEach(() => {
     AWS.restore('DynamoDB.DocumentClient');
   })
@@ -54,7 +53,7 @@ describe('When we increment the counter', function () {
       callback(null, { Item: { id: 1, counter: 1 } });
     });
 
-    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(event);
+    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(eventFactory.putEvent());
 
     expect(headers['Content-Type']).to.equal('application/json');
     expect(statusCode).to.equal(200);
@@ -70,7 +69,7 @@ describe('When we increment the counter', function () {
       callback(new Error('fail'));
     });
 
-    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(event);
+    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(eventFactory.putEvent());
     expect(headers['Content-Type']).to.equal('application/json');
     expect(statusCode).to.equal(400);
     expect(JSON.parse(body).message).to.equal('fail');
@@ -79,7 +78,7 @@ describe('When we increment the counter', function () {
 
 describe('When we try to delete the counter', function () {
   it('verifies error response', async () => {
-    const { headers, statusCode, body } = await deleteHandler({ dynamo: dynamoDbClient.connect() })(event);
+    const { headers, statusCode, body } = await deleteHandler({ dynamo: dynamoDbClient.connect() })(eventFactory.emptyEvent());
 
     expect(headers['Content-Type']).to.equal('application/json');
     expect(statusCode).to.equal(500);

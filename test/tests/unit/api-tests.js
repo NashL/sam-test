@@ -1,48 +1,93 @@
 'use strict';
+const { getHandler, putHandler, deleteHandler } = require('../../handler');
+const AWS = require("aws-sdk-mock");
 
-const getFunc = require('../../get.js');
-const putFunc = require('../../put.js');
-const deleteFunc = require('../../delete.js');
 const chai = require('chai');
 const expect = chai.expect;
-var event, context;
+var event;
 
-describe('When we get the counter', function () {
+const dynamoDbClient = require('../../utils/dynamoDbClient');
+
+describe('When we GET the counter', () => {
+  afterEach(() => {
+    AWS.restore('DynamoDB.DocumentClient');
+  })
+
   it('verifies successful response', async () => {
-      const result = await getFunc.lambdaHandler(event, context);
-      expect(result).to.be.an('object');
-      expect(result.statusCode).to.equal(200);
-      expect(result.body).to.be.an('string');
+    AWS.mock('DynamoDB.DocumentClient', 'get', function (params, callback) {
+      callback(null, { Item: { id: 1, counter: 0 } });
+    });
 
-      let parsedResponse = JSON.parse(result.body);
-      expect(parsedResponse).to.be.an('object');
-      expect(parsedResponse.counter).to.be.a('number');
+    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(event);
+
+    expect(headers['Content-Type']).to.equal('application/json');
+    expect(statusCode).to.equal(200);
+    expect(body).to.be.an('string');
+
+    let parsedBody = JSON.parse(body);
+    expect(parsedBody).to.be.an('object');
+    expect(parsedBody.counter).to.be.equal(0);
+  });
+
+  it('verifies error response if dynamoDb fails', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', function (params, callback) {
+      callback(new Error('fail'));
+    });
+
+    const { headers, statusCode, body } = await getHandler({ dynamo: dynamoDbClient.connect() })(event);
+    expect(headers['Content-Type']).to.equal('application/json');
+    expect(statusCode).to.equal(400);
+    expect(JSON.parse(body).message).to.equal('fail');
   });
 });
 
-
 describe('When we increment the counter', function () {
-  it('verifies successful response', async () => {
-      const result = await putFunc.lambdaHandler(event, context);
-      expect(result).to.be.an('object');
-      expect(result.statusCode).to.equal(200);
-      expect(result.body).to.be.an('string');
+  afterEach(() => {
+    AWS.restore('DynamoDB.DocumentClient');
+  })
 
-      let parsedResponse = JSON.parse(result.body);
-      expect(parsedResponse).to.be.an('object');
-      expect(parsedResponse.counter).to.be.a('number');
+  it('verifies successful response after increasing the counter for the first time', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', function (params, callback) {
+      callback(null, { Item: { id: 1, counter: 0 } });
+    });
+    AWS.mock('DynamoDB.DocumentClient', 'put', function (params, callback) {
+      callback(null, { Item: { id: 1, counter: 1 } });
+    });
+
+    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(event);
+
+    expect(headers['Content-Type']).to.equal('application/json');
+    expect(statusCode).to.equal(200);
+    expect(body).to.be.an('string');
+
+    let parsedBody = JSON.parse(body);
+    expect(parsedBody).to.be.an('object');
+    expect(parsedBody.counter).to.be.equal(1);
+  });
+
+  it('verifies error response if dynamoDb fails', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'put', function (params, callback) {
+      callback(new Error('fail'));
+    });
+
+    const { headers, statusCode, body } = await putHandler({ dynamo: dynamoDbClient.connect() })(event);
+    expect(headers['Content-Type']).to.equal('application/json');
+    expect(statusCode).to.equal(400);
+    expect(JSON.parse(body).message).to.equal('fail');
   });
 });
 
 describe('When we try to delete the counter', function () {
   it('verifies error response', async () => {
-      const result = await deleteFunc.lambdaHandler(event, context);
-      expect(result).to.be.an('object');
-      expect(result.statusCode).to.equal(500);
-      expect(result.body).to.be.an('string');
+    const { headers, statusCode, body } = await deleteHandler({ dynamo: dynamoDbClient.connect() })(event);
 
-      let parsedResponse = JSON.parse(result.body);
-      expect(parsedResponse).to.be.an('object');
-      expect(parsedResponse.message).to.be.equal('Internal Server Error');
+    expect(headers['Content-Type']).to.equal('application/json');
+    expect(statusCode).to.equal(500);
+    expect(body).to.be.an('string');
+
+    let parsedBody = JSON.parse(body);
+    expect(parsedBody).to.be.an('object');
+    expect(parsedBody.message).to.be.equal('Internal Server Error');
+
   });
 });
